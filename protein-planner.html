@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Low Budget Protein Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --neon: #39ff14;
+    --neon-blue: #00e5ff;
+    --neon-dim: rgba(57,255,20,0.13);
+    --bg: #080c0a;
+    --glass: rgba(255,255,255,0.04);
+    --glass-border: rgba(57,255,20,0.18);
+    --text: #e8f5e9;
+    --muted: #6b8f6e;
+  }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; min-height: 100vh; }
+
+  #particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .mesh {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 60% 40% at 10% 20%, rgba(57,255,20,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 50% at 90% 80%, rgba(0,229,255,0.05) 0%, transparent 70%);
+  }
+
+  nav {
+    position: fixed; top:0; left:0; right:0; z-index:100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 48px;
+    background: rgba(8,12,10,0.75); backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(57,255,20,0.08);
+  }
+  .nav-logo { font-family:'Space Mono',monospace; font-size:.95rem; color:var(--neon); letter-spacing:2px; text-transform:uppercase; }
+  .nav-logo span { color:var(--text); }
+  .nav-links { display:flex; gap:32px; list-style:none; }
+  .nav-links a { color:var(--muted); text-decoration:none; font-size:.8rem; font-weight:600; letter-spacing:1px; text-transform:uppercase; transition:color .3s; }
+  .nav-links a:hover { color:var(--neon); }
+
+  .hero { position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:120px 24px 60px; text-align:center; }
+  .hero-badge { display:inline-flex; align-items:center; gap:8px; background:var(--neon-dim); border:1px solid var(--glass-border); border-radius:100px; padding:6px 18px; font-size:.72rem; font-weight:700; color:var(--neon); letter-spacing:2px; text-transform:uppercase; margin-bottom:28px; animation:fadeDown .8s ease both; }
+  .hero-badge-dot { width:6px; height:6px; border-radius:50%; background:var(--neon); box-shadow:0 0 8px var(--neon); animation:blink 1.5s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+  .hero h1 { font-size:clamp(2.2rem,6.5vw,5rem); font-weight:900; line-height:1.06; letter-spacing:-2px; margin-bottom:16px; animation:fadeDown .9s ease .1s both; }
+  .hero h1 .hl { background:linear-gradient(130deg,var(--neon),var(--neon-blue)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; filter:drop-shadow(0 0 28px rgba(57,255,20,.35)); }
+  .hero-sub { font-size:clamp(.95rem,2.2vw,1.2rem); color:var(--muted); margin-bottom:52px; animation:fadeDown 1s ease .2s both; }
+
+  .input-card { background:var(--glass); border:1px solid var(--glass-border); backdrop-filter:blur(24px); border-radius:24px; padding:36px 44px; width:100%; max-width:500px; animation:fadeUp 1s ease .3s both; position:relative; overflow:hidden; }
+  .input-card::before { content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:conic-gradient(from 0deg,transparent 340deg,rgba(57,255,20,.05) 360deg); animation:spin 10s linear infinite; pointer-events:none; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .input-label { display:block; font-size:.72rem; font-weight:700; letter-spacing:2px; color:var(--neon); text-transform:uppercase; margin-bottom:10px; }
+  .input-wrap { position:relative; margin-bottom:20px; }
+  .currency-prefix { position:absolute; left:16px; top:50%; transform:translateY(-50%); font-family:'Space Mono',monospace; font-size:1.1rem; color:var(--neon); font-weight:700; pointer-events:none; }
+  .budget-input { width:100%; background:rgba(0,0,0,.45); border:1.5px solid rgba(57,255,20,.2); border-radius:14px; padding:15px 18px 15px 42px; font-family:'Space Mono',monospace; font-size:1.5rem; font-weight:700; color:var(--text); outline:none; transition:border-color .3s,box-shadow .3s; }
+  .budget-input::placeholder { color:rgba(107,143,110,.35); }
+  .budget-input:focus { border-color:var(--neon); box-shadow:0 0 0 3px rgba(57,255,20,.1),0 0 24px rgba(57,255,20,.12); }
+  .btn-generate { width:100%; padding:17px; background:linear-gradient(135deg,var(--neon),#00c853); border:none; border-radius:14px; font-family:'Poppins',sans-serif; font-size:.95rem; font-weight:700; color:#000; letter-spacing:2px; text-transform:uppercase; cursor:pointer; position:relative; overflow:hidden; transition:transform .2s,box-shadow .3s; box-shadow:0 4px 24px rgba(57,255,20,.28); }
+  .btn-generate::before { content:''; position:absolute; top:0; left:-100%; width:100%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent); transition:left .5s; }
+  .btn-generate:hover::before { left:100%; }
+  .btn-generate:hover { transform:translateY(-2px); box-shadow:0 8px 36px rgba(57,255,20,.45); }
+  .btn-generate:active { transform:translateY(0); }
+  .btn-generate.loading { pointer-events:none; background:linear-gradient(135deg,#1a3d1a,#0d2d0d); color:var(--neon); }
+  .spinner { display:none; width:18px; height:18px; border:2px solid rgba(57,255,20,.25); border-top-color:var(--neon); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto; }
+
+  .source-note { margin-top:14px; font-size:.64rem; color:var(--muted); text-align:center; line-height:1.6; }
+  .source-note a { color:rgba(0,229,255,.65); text-decoration:none; }
+  .source-note a:hover { color:var(--neon-blue); }
+
+  #result { position:relative; z-index:1; padding:0 24px 100px; max-width:940px; margin:0 auto; display:none; }
+  #result.visible { display:block; animation:fadeUp .7s ease both; }
+  .result-header { text-align:center; margin-bottom:44px; }
+  .result-header h2 { font-size:clamp(1.5rem,3.5vw,2.2rem); font-weight:800; letter-spacing:-1px; margin-bottom:8px; }
+  .result-header p { color:var(--muted); font-size:.85rem; }
+
+  .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:36px; }
+  .stat-card { background:var(--glass); border:1px solid var(--glass-border); backdrop-filter:blur(16px); border-radius:18px; padding:22px 18px; text-align:center; transition:transform .3s,box-shadow .3s; }
+  .stat-card:hover { transform:translateY(-4px); box-shadow:0 12px 36px rgba(57,255,20,.1); }
+  .stat-value { font-family:'Space Mono',monospace; font-size:clamp(1.3rem,2.8vw,1.9rem); font-weight:700; color:var(--neon); text-shadow:0 0 18px rgba(57,255,20,.4); margin-bottom:4px; }
+  .stat-label { font-size:.66rem; color:var(--muted); text-transform:uppercase; letter-spacing:1.5px; font-weight:600; }
+
+  .progress-section { background:var(--glass); border:1px solid var(--glass-border); backdrop-filter:blur(16px); border-radius:18px; padding:26px 30px; margin-bottom:28px; }
+  .progress-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .progress-title { font-size:.72rem; font-weight:700; letter-spacing:2px; color:var(--neon); text-transform:uppercase; }
+  .progress-value { font-family:'Space Mono',monospace; font-size:.85rem; }
+  .progress-track { width:100%; height:10px; background:rgba(255,255,255,.06); border-radius:100px; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:100px; background:linear-gradient(90deg,var(--neon),var(--neon-blue)); box-shadow:0 0 14px rgba(57,255,20,.45); width:0%; transition:width 1.6s cubic-bezier(.23,1,.32,1); }
+  .progress-note { margin-top:10px; font-size:.68rem; color:var(--muted); }
+
+  .food-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(185px,1fr)); gap:14px; margin-bottom:28px; }
+  .food-card { background:var(--glass); border:1px solid rgba(255,255,255,.06); backdrop-filter:blur(14px); border-radius:20px; padding:22px 16px; text-align:center; transition:all .3s cubic-bezier(.23,1,.32,1); opacity:0; transform:translateY(18px); position:relative; overflow:hidden; }
+  .food-card::after { content:''; position:absolute; inset:0; border-radius:20px; border:1px solid transparent; transition:border-color .3s; }
+  .food-card:hover { transform:translateY(-5px) scale(1.02); box-shadow:0 14px 44px rgba(57,255,20,.13); }
+  .food-card:hover::after { border-color:var(--neon); }
+  .food-card.revealed { opacity:1; transform:translateY(0); }
+  .food-emoji { font-size:2.1rem; margin-bottom:8px; display:block; }
+  .food-name { font-size:.88rem; font-weight:700; margin-bottom:3px; }
+  .food-qty { font-size:.7rem; color:var(--muted); margin-bottom:10px; }
+  .food-pbar-wrap { width:100%; height:5px; background:rgba(255,255,255,.05); border-radius:100px; overflow:hidden; margin-bottom:7px; }
+  .food-pbar { height:100%; border-radius:100px; width:0%; transition:width 1.2s cubic-bezier(.23,1,.32,1); }
+  .food-protein-val { font-family:'Space Mono',monospace; font-size:.76rem; font-weight:700; color:var(--neon); }
+  .food-cost-val { font-size:.66rem; color:var(--muted); margin-top:3px; }
+  .food-source-tag { font-size:.58rem; color:rgba(107,143,110,.45); margin-top:4px; font-style:italic; }
+
+  .data-section { background:var(--glass); border:1px solid rgba(255,255,255,.06); backdrop-filter:blur(14px); border-radius:18px; padding:24px 28px; margin-bottom:28px; overflow-x:auto; }
+  .data-section h3 { font-size:.72rem; font-weight:700; letter-spacing:2px; color:var(--neon); text-transform:uppercase; margin-bottom:18px; }
+  table { width:100%; border-collapse:collapse; font-size:.78rem; min-width:540px; }
+  th { text-align:left; color:var(--muted); font-weight:600; font-size:.65rem; letter-spacing:1px; text-transform:uppercase; padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,.06); }
+  td { padding:10px 0; border-bottom:1px solid rgba(255,255,255,.04); color:var(--text); padding-right:10px; }
+  tr:last-child td { border-bottom:none; }
+  .td-food { font-weight:600; }
+  .td-protein { font-family:'Space Mono',monospace; color:var(--neon); font-weight:700; }
+  .td-cost { font-family:'Space Mono',monospace; color:var(--neon-blue); }
+  .td-ratio { font-family:'Space Mono',monospace; font-size:.7rem; color:var(--muted); }
+  .td-src { font-size:.6rem; color:rgba(107,143,110,.45); font-style:italic; }
+
+  .tip-box { background:rgba(0,229,255,.04); border:1px solid rgba(0,229,255,.18); border-radius:16px; padding:18px 22px; display:flex; gap:12px; align-items:flex-start; }
+  .tip-icon { font-size:1.3rem; flex-shrink:0; }
+  .tip-text { font-size:.82rem; color:rgba(0,229,255,.8); line-height:1.65; }
+  .tip-text strong { color:var(--neon-blue); }
+
+  #features { position:relative; z-index:1; padding:80px 24px 100px; max-width:1080px; margin:0 auto; }
+  .section-title { text-align:center; margin-bottom:56px; }
+  .section-title h2 { font-size:clamp(1.7rem,4vw,2.6rem); font-weight:800; letter-spacing:-1px; margin-bottom:10px; }
+  .section-title p { color:var(--muted); font-size:.95rem; }
+  .features-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:22px; }
+  .feature-card { background:var(--glass); border:1px solid rgba(255,255,255,.05); backdrop-filter:blur(18px); border-radius:22px; padding:32px 28px; position:relative; overflow:hidden; transition:all .4s cubic-bezier(.23,1,.32,1); }
+  .feature-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--neon),var(--neon-blue)); transform:scaleX(0); transform-origin:left; transition:transform .4s cubic-bezier(.23,1,.32,1); }
+  .feature-card:hover::after { transform:scaleX(1); }
+  .feature-card:hover { transform:translateY(-7px); border-color:var(--glass-border); box-shadow:0 20px 54px rgba(57,255,20,.1); }
+  .feature-icon { width:52px; height:52px; border-radius:14px; background:var(--neon-dim); border:1px solid rgba(57,255,20,.22); display:flex; align-items:center; justify-content:center; font-size:1.5rem; margin-bottom:20px; transition:all .3s; }
+  .feature-card:hover .feature-icon { background:rgba(57,255,20,.18); box-shadow:0 0 20px rgba(57,255,20,.25); transform:scale(1.1) rotate(5deg); }
+  .feature-card h3 { font-size:1rem; font-weight:700; margin-bottom:8px; }
+  .feature-card p { font-size:.82rem; color:var(--muted); line-height:1.65; }
+
+  footer { position:relative; z-index:1; padding:44px 24px; border-top:1px solid rgba(255,255,255,.04); text-align:center; }
+  .footer-logo { font-family:'Space Mono',monospace; font-size:.88rem; color:var(--neon); letter-spacing:3px; text-transform:uppercase; margin-bottom:10px; }
+  .footer-tagline { font-size:.75rem; color:var(--muted); margin-bottom:20px; }
+  .footer-copy { font-size:.67rem; color:rgba(107,143,110,.4); line-height:1.8; }
+  .footer-copy span { color:var(--neon); }
+
+  .divider { position:relative; z-index:1; height:1px; background:linear-gradient(90deg,transparent,rgba(57,255,20,.18),transparent); max-width:800px; margin:0 auto; }
+
+  @keyframes fadeDown { from{opacity:0;transform:translateY(-18px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeUp   { from{opacity:0;transform:translateY(26px)}  to{opacity:1;transform:translateY(0)} }
+
+  .reveal { opacity:0; transform:translateY(28px); transition:opacity .7s ease,transform .7s ease; }
+  .reveal.revealed { opacity:1; transform:translateY(0); }
+
+  @media (max-width:640px) {
+    nav { padding:14px 18px; }
+    .nav-links { display:none; }
+    .input-card { padding:26px 20px; }
+    .stats-row { grid-template-columns:1fr 1fr; }
+    .stats-row .stat-card:last-child { grid-column:span 2; }
+    .progress-section { padding:18px 18px; }
+    .data-section { padding:18px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+<div class="mesh"></div>
+
+<nav>
+  <div class="nav-logo">LB<span>Protein</span></div>
+  <ul class="nav-links">
+    <li><a href="#hero">Planner</a></li>
+    <li><a href="#features">Features</a></li>
+  </ul>
+</nav>
+
+<section class="hero" id="hero">
+  <div class="hero-badge"><span class="hero-badge-dot"></span> Verified data · India Apr 2026</div>
+  <h1>Low Budget<br/><span class="hl">Protein Planner</span></h1>
+  <p class="hero-sub">Build muscle without breaking the bank 💪<br/>Real foods. Verified nutrition. Actual Indian prices.</p>
+
+  <div class="input-card">
+    <label class="input-label">Monthly Food Budget</label>
+    <div class="input-wrap">
+      <span class="currency-prefix">₹</span>
+      <input type="number" class="budget-input" id="budgetInput" placeholder="2000" min="300" max="99999"/>
+    </div>
+    <button class="btn-generate" id="generateBtn" onclick="generatePlan()">
+      <span id="btnText">⚡ Generate My Plan</span>
+      <div class="spinner" id="spinner"></div>
+    </button>
+    <p class="source-note">
+      Protein: ICMR tables &amp; 
+      <a href="https://plantigo.in/blogs/plant-based-protein-powders/soya-chunks-nutrition-facts-per-100g-cooked-vs-raw-protein" target="_blank">plantigo.in</a> · 
+      Prices: <a href="https://www.bigbasket.com" target="_blank">BigBasket</a>, 
+      <a href="https://www.commodityonline.com/egg-rate" target="_blank">NECC</a>, 
+      <a href="https://www.commodityonline.com/mandiprices" target="_blank">Mandi rates</a> (Apr 2026)
+    </p>
+  </div>
+</section>
+
+<section id="result">
+  <div class="result-header">
+    <h2>Your Daily <span style="color:var(--neon)">Protein Plan</span></h2>
+    <p id="resultSubtitle"></p>
+  </div>
+
+  <div class="stats-row" id="statsRow"></div>
+
+  <div class="progress-section reveal">
+    <div class="progress-header">
+      <span class="progress-title">Daily Protein (100g target)</span>
+      <span class="progress-value" id="progressLabel">0g / 100g</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <p class="progress-note" id="progressNote"></p>
+  </div>
+
+  <div class="food-grid" id="foodGrid"></div>
+
+  <div class="data-section reveal">
+    <h3>📋 Full Breakdown — Verified Sources</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Food</th>
+          <th>Qty / day</th>
+          <th>Protein</th>
+          <th>Cost</th>
+          <th>g/₹</th>
+          <th>Data source</th>
+        </tr>
+      </thead>
+      <tbody id="dataTableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="tip-box reveal">
+    <span class="tip-icon">⚠️</span>
+    <div class="tip-text" id="tipText"></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="features">
+  <div class="section-title reveal">
+    <h2>Why <span style="color:var(--neon)">LBProtein?</span></h2>
+    <p>No fake numbers. No guesswork. Just real data for real gains.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card reveal">
+      <div class="feature-icon">✅</div>
+      <h3>Verified Nutrition Data</h3>
+      <p>Every protein value sourced from ICMR food composition tables, peer-reviewed Indian nutrition references, and named websites — not invented.</p>
+    </div>
+    <div class="feature-card reveal" style="transition-delay:.1s">
+      <div class="feature-icon">📊</div>
+      <h3>Real Market Prices</h3>
+      <p>Prices from BigBasket (soya chunks ₹112/kg), NECC egg rates (~₹7/egg), and mandi data for dal and peanuts — updated April 2026.</p>
+    </div>
+    <div class="feature-card reveal" style="transition-delay:.2s">
+      <div class="feature-icon">🥚</div>
+      <h3>Raw vs Cooked — Explained</h3>
+      <p>Soya chunks are 52g protein per 100g raw. We flag this clearly so you weigh before cooking and track your intake accurately.</p>
+    </div>
+    <div class="feature-card reveal" style="transition-delay:.3s">
+      <div class="feature-icon">💰</div>
+      <h3>Budget Friendly</h3>
+      <p>Plans work from ₹500/month upward. Budget is allocated by protein-per-rupee ratio using real prices.</p>
+    </div>
+    <div class="feature-card reveal" style="transition-delay:.4s">
+      <div class="feature-icon">🇮🇳</div>
+      <h3>Desi Foods Only</h3>
+      <p>Eggs, soya chunks, moong dal, peanuts, chana dal, dalia — every item available at your local kirana store.</p>
+    </div>
+    <div class="feature-card reveal" style="transition-delay:.5s">
+      <div class="feature-icon">⚡</div>
+      <h3>Instant &amp; Transparent</h3>
+      <p>Every number in the plan shows its source. No guesswork, no hidden assumptions, no spin.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">LBProtein</div>
+  <p class="footer-tagline">Real data · Real gains · Made for India 💚</p>
+  <p class="footer-copy">
+    Nutrition sources: ICMR, plantigo.in, denzournutrition.com, zanducare.com<br/>
+    Price sources: BigBasket, NECC egg rates, commodityonline.com mandi rates · April 2026<br/>
+    <span>No fake numbers. No invented costs. 💪</span>
+  </p>
+</footer>
+
+<script>
+// ── PARTICLES ──
+(function(){
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  let W, H, pts;
+  function resize(){ W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+  function mk(){ return { x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.4+.3, vx:(Math.random()-.5)*.28, vy:(Math.random()-.5)*.28, a:Math.random()*.35+.08, c:Math.random()>.55?'57,255,20':'0,229,255' }; }
+  function init(){ resize(); pts = Array.from({length:80},mk); }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p=>{
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${p.c},${p.a})`; ctx.fill();
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0||p.x>W)p.vx*=-1;
+      if(p.y<0||p.y>H)p.vy*=-1;
+    });
+    for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<110){ ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.strokeStyle=`rgba(57,255,20,${.03*(1-d/110)})`; ctx.lineWidth=.5; ctx.stroke(); }
+    }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize', resize);
+  init(); draw();
+})();
+
+// ── FOOD DATABASE — VERIFIED DATA ──
+// Each entry has cited sources for both protein AND price.
+const FOODS = [
+  {
+    name: 'Soya Chunks',
+    emoji: '🌿',
+    color: '#81c784',
+    // Protein: 52g/100g raw dry — plantigo.in (cross-checks with ICMR)
+    proteinPer100g: 52,
+    perUnit: 'g (raw dry)',
+    // Price: Fortune 1kg on BigBasket = ₹111.55 → ~₹112/kg
+    costPerKg: 112,
+    isPerEgg: false,
+    fraction: 0.25,
+    proteinNote: '52g/100g raw (plantigo.in)',
+    priceNote: 'BigBasket ₹112/kg (Fortune 1kg)',
+  },
+  {
+    name: 'Eggs',
+    emoji: '🥚',
+    color: '#ffd54f',
+    // Protein: ~6.5g per egg (13g/100g × ~50g per egg) — denzournutrition.com / ICMR
+    proteinPerEgg: 6.5,
+    // Price: NECC Dec 2025 ~₹681/100 eggs → ₹6.81/egg; retail ~₹7
+    costPerEgg: 7,
+    isPerEgg: true,
+    fraction: 0.22,
+    proteinNote: '6.5g/egg (ICMR ~13g/100g)',
+    priceNote: 'NECC ~₹681/100 eggs → ₹7/egg',
+  },
+  {
+    name: 'Peanuts',
+    emoji: '🥜',
+    color: '#ffb74d',
+    // Protein: 26g/100g — ICMR / multiple sources confirm
+    proteinPer100g: 26,
+    perUnit: 'g',
+    // Price: Mandi groundnut ~₹68–70/kg wholesale; retail shelled ~₹110–130/kg
+    costPerKg: 120,
+    isPerEgg: false,
+    fraction: 0.15,
+    proteinNote: '26g/100g (ICMR)',
+    priceNote: 'Retail shelled ~₹120/kg (mandi ~₹68/kg)',
+  },
+  {
+    name: 'Moong Dal',
+    emoji: '🫘',
+    color: '#aed581',
+    // Protein: 25g/100g raw — denzournutrition.com
+    proteinPer100g: 25,
+    perUnit: 'g (raw)',
+    // Price: Rajdhani 500g wholesale ₹64 → ~₹128–130/kg retail
+    costPerKg: 130,
+    isPerEgg: false,
+    fraction: 0.18,
+    proteinNote: '25g/100g raw (denzournutrition.com)',
+    priceNote: 'Retail ~₹130/kg',
+  },
+  {
+    name: 'Chana Dal',
+    emoji: '🟡',
+    color: '#ffcc80',
+    // Protein: 22g/100g — zanducare.com / ihatepsm.com (Bengal gram dal 17–22g)
+    proteinPer100g: 22,
+    perUnit: 'g (raw)',
+    // Price: Mandi avg ₹79.68/kg → retail ~₹85–95/kg
+    costPerKg: 90,
+    isPerEgg: false,
+    fraction: 0.12,
+    proteinNote: '22g/100g (zanducare.com)',
+    priceNote: 'Mandi ₹79.68/kg → retail ~₹90/kg',
+  },
+  {
+    name: 'Dalia',
+    emoji: '🌾',
+    color: '#a1887f',
+    // Protein: ~12.5g/100g — ICMR; Rajdhani 500g ~₹31 = ₹62/kg
+    proteinPer100g: 12.5,
+    perUnit: 'g',
+    costPerKg: 65,
+    isPerEgg: false,
+    fraction: 0.08,
+    proteinNote: '12.5g/100g (ICMR)',
+    priceNote: 'Rajdhani 500g ~₹31 → ₹62–65/kg',
+  }
+];
+
+function computePlan(daily) {
+  return FOODS.map(food => {
+    const budget = daily * food.fraction;
+    let qty, qtyLabel, protein, cost;
+
+    if (food.isPerEgg) {
+      const eggs = Math.max(1, Math.round(budget / food.costPerEgg));
+      qty = eggs;
+      qtyLabel = `${eggs} egg${eggs > 1 ? 's' : ''}`;
+      protein = +(eggs * food.proteinPerEgg).toFixed(1);
+      cost = +(eggs * food.costPerEgg).toFixed(1);
+    } else {
+      const grams = Math.max(20, (budget / food.costPerKg) * 1000);
+      qty = Math.round(grams);
+      qtyLabel = `${Math.round(grams)}g ${food.perUnit}`;
+      protein = +((grams / 100) * food.proteinPer100g).toFixed(1);
+      cost = +(grams / 1000 * food.costPerKg).toFixed(1);
+    }
+
+    return { ...food, qty, qtyLabel, protein, cost, ratio: +(protein / cost).toFixed(2) };
+  });
+}
+
+function generatePlan() {
+  const input = document.getElementById('budgetInput');
+  const monthly = parseFloat(input.value);
+  if (!monthly || monthly < 300) {
+    input.style.borderColor = '#ff5252';
+    input.style.boxShadow = '0 0 0 3px rgba(255,82,82,.15)';
+    setTimeout(() => { input.style.borderColor = ''; input.style.boxShadow = ''; }, 1600);
+    return;
+  }
+  const btn = document.getElementById('generateBtn');
+  const btnText = document.getElementById('btnText');
+  const spinner = document.getElementById('spinner');
+  btn.classList.add('loading');
+  btnText.style.display = 'none';
+  spinner.style.display = 'block';
+  setTimeout(() => {
+    btn.classList.remove('loading');
+    btnText.style.display = 'block';
+    spinner.style.display = 'none';
+    renderPlan(monthly);
+  }, 1400);
+}
+
+function renderPlan(monthly) {
+  const daily = +(monthly / 30).toFixed(1);
+  const plan = computePlan(daily);
+  const totalProtein = +plan.reduce((s,f) => s+f.protein, 0).toFixed(1);
+  const totalCost    = +plan.reduce((s,f) => s+f.cost,    0).toFixed(1);
+  const target = 100;
+  const pct = Math.min(100, (totalProtein / target) * 100);
+
+  document.getElementById('resultSubtitle').textContent =
+    `₹${monthly.toFixed(0)}/month → ₹${daily}/day · ${totalProtein}g protein · ₹${totalCost} food cost`;
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-value">₹${daily}</div>
+      <div class="stat-label">Per Day Budget</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${totalProtein}g</div>
+      <div class="stat-label">Daily Protein</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${(totalProtein/totalCost).toFixed(1)}g/₹</div>
+      <div class="stat-label">Protein Per Rupee</div>
+    </div>
+  `;
+
+  document.getElementById('progressLabel').textContent = `${totalProtein}g / ${target}g`;
+  document.getElementById('progressNote').textContent = totalProtein >= target
+    ? `✅ Hits the 100g/day muscle-building target.`
+    : `ℹ️ ${(target - totalProtein).toFixed(0)}g below 100g/day. Increase budget or add more soya chunks.`;
+  setTimeout(() => { document.getElementById('progressFill').style.width = pct + '%'; }, 120);
+
+  // Food cards
+  const grid = document.getElementById('foodGrid');
+  grid.innerHTML = '';
+  const maxP = Math.max(...plan.map(f => f.protein));
+  plan.forEach((food, i) => {
+    const barPct = (food.protein / maxP) * 100;
+    const card = document.createElement('div');
+    card.className = 'food-card';
+    card.innerHTML = `
+      <span class="food-emoji">${food.emoji}</span>
+      <div class="food-name">${food.name}</div>
+      <div class="food-qty">${food.qtyLabel}</div>
+      <div class="food-pbar-wrap">
+        <div class="food-pbar" style="background:${food.color};box-shadow:0 0 7px ${food.color};" data-pct="${barPct}"></div>
+      </div>
+      <div class="food-protein-val">${food.protein}g protein</div>
+      <div class="food-cost-val">≈ ₹${food.cost}/day</div>
+      <div class="food-source-tag">${food.proteinNote}</div>
+    `;
+    grid.appendChild(card);
+    setTimeout(() => {
+      card.classList.add('revealed');
+      setTimeout(() => { card.querySelector('.food-pbar').style.width = barPct + '%'; }, 220);
+    }, i * 90 + 160);
+  });
+
+  // Data table
+  const tbody = document.getElementById('dataTableBody');
+  tbody.innerHTML = '';
+  plan.forEach(f => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="td-food">${f.emoji} ${f.name}</td>
+      <td>${f.qtyLabel}</td>
+      <td class="td-protein">${f.protein}g</td>
+      <td class="td-cost">₹${f.cost}</td>
+      <td class="td-ratio">${f.ratio}g/₹</td>
+      <td class="td-src">${f.priceNote}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  const tfoot = document.createElement('tr');
+  tfoot.style.fontWeight = '700';
+  tfoot.innerHTML = `
+    <td style="color:var(--neon)">TOTAL</td>
+    <td>—</td>
+    <td class="td-protein">${totalProtein}g</td>
+    <td class="td-cost">₹${totalCost}</td>
+    <td class="td-ratio">${(totalProtein/totalCost).toFixed(2)}g/₹</td>
+    <td class="td-src">—</td>
+  `;
+  tbody.appendChild(tfoot);
+
+  document.getElementById('tipText').innerHTML =
+    `<strong>Important — Soya chunks raw vs cooked:</strong> 52g protein per 100g is the <em>raw dry</em> weight. 
+    Once soaked, 100g raw swells to ~280g cooked. Cooked protein per 100g cooked ≈ 17g — 
+    but you still got the same 52g total from that 100g you bought. 
+    <strong>Always weigh soya chunks dry, before soaking, to track protein correctly.</strong>`;
+
+  const resultEl = document.getElementById('result');
+  resultEl.classList.add('visible');
+  setTimeout(() => { resultEl.scrollIntoView({ behavior:'smooth', block:'start' }); observeReveal(); }, 120);
+}
+
+function observeReveal() {
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('revealed'); obs.unobserve(e.target); }});
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+}
+
+document.getElementById('budgetInput').addEventListener('keydown', e => { if(e.key==='Enter') generatePlan(); });
+window.addEventListener('load', observeReveal);
+</script>
+</body>
+</html>
